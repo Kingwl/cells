@@ -1,3 +1,5 @@
+import { FormulaExpression } from '../parser'
+
 export enum ValueKind {
   nothing,
   number,
@@ -25,11 +27,13 @@ export interface StringValue extends ValueBase {
 
 export interface FormulaValue extends ValueBase {
   kind: ValueKind.formula
-  value: string
-  resolvedValue: any
+  value: FormulaExpression
+  resolvedValue?: PrimitiveValue
 }
 
-export type Value = NothingValue | NumberValue | StringValue | FormulaValue
+export type PrimitiveValue = NothingValue | NumberValue | StringValue
+
+export type Value = PrimitiveValue | FormulaValue
 
 export const nothing: NothingValue = {
   kind: ValueKind.nothing

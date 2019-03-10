@@ -1,8 +1,10 @@
 import { Cell } from './models/cell'
 import { parse, SyntaxKind } from './parser'
-import { Value, ValueKind } from './models/value'
+import { Value, ValueKind, PrimitiveValue, FormulaValue } from './models/value'
+import { execute, Context } from './executor'
+import { Table } from './models/table'
 
-export function resolveCellValue(cell: Cell): Value {
+export function parseCellValue(cell: Cell): Value {
   const token = parse(cell.value)
   switch (token.kind) {
     case SyntaxKind.Nothing:
@@ -19,14 +21,46 @@ export function resolveCellValue(cell: Cell): Value {
         kind: ValueKind.string,
         value: token.value
       }
+    case SyntaxKind.FormulaLiteral:
+      return {
+        kind: ValueKind.formula,
+        value: token.expression
+      }
   }
 }
 
-export function ensureCellValue(cell: Cell) {
+export function resolveFormulaValue(
+  value: FormulaValue,
+  cell: Cell,
+  table: Table
+) {
+  const context: Context = { cell, table }
+
+  if (!value.resolvedValue) {
+    value.resolvedValue = execute(value.value, context)
+  }
+  return value.resolvedValue
+}
+
+export function resolveCellValue(
+  value: Value,
+  cell: Cell,
+  table: Table
+): PrimitiveValue {
+  switch (value.kind) {
+    case ValueKind.nothing:
+    case ValueKind.number:
+    case ValueKind.string:
+      return value
+    case ValueKind.formula:
+      return resolveFormulaValue(value, cell, table)
+  }
+}
+
+export function ensureCellValue(cell: Cell, table: Table) {
   if (cell.dirty) {
-    cell.dependencies.forEach(ensureCellValue)
-    cell.resolvedValue = resolveCellValue(cell)
+    cell.resolvedValue = parseCellValue(cell)
     cell.dirty = false
   }
-  return cell.resolvedValue
+  return resolveCellValue(cell.resolvedValue, cell, table)
 }

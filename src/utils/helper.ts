@@ -7,7 +7,8 @@ export function fillCells(cols: number): Cell[] {
   return fill(cols, () => ({
     value: '',
     resolvedValue: nothing,
-    dependencies: [],
+    dependencies: new Set<Cell>(),
+    subs: new Set<Cell>(),
     editing: false,
     dirty: false
   }))

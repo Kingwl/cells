@@ -2,6 +2,7 @@ import { defaultRows, defaultCols, defaultTitle } from './models/constant'
 import { Table } from './models/table'
 import { fillRows } from './utils/helper'
 import { render } from './render'
+import { Cell } from './models/cell';
 
 export interface Options {
   title?: string
@@ -20,7 +21,8 @@ export function setup(el: Element, options: Options = {}) {
     title,
     rows: fillRows(initialRows, initialCols),
     colsCount: initialCols,
-    rowsCount: initialRows
+    rowsCount: initialRows,
+    dirtyCell: new Set<Cell>()
   }
 
   return render(el, table)

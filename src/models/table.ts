@@ -1,4 +1,5 @@
 import { Row } from './row'
+import { Cell } from './cell';
 
 export enum Order {
   ASC,
@@ -17,6 +18,8 @@ export interface TableBase {
   rowsCount: number
 
   order?: Order
+
+  dirtyCell: Set<Cell>
 }
 
 export interface NormalTable extends TableBase {}

@@ -4,7 +4,8 @@ import { Cell } from './models/cell'
 import { isInput, isSpan } from './utils/dom'
 import { editCell, saveCell } from './edit'
 import { ensureCellValue } from './resolve'
-import { Value, ValueKind } from './models/value'
+import { Value, ValueKind, PrimitiveValue } from './models/value'
+import { notifyDirty, updateCell } from './update';
 
 declare global {
   interface HTMLTableDataCellElement {
@@ -17,7 +18,7 @@ declare global {
 }
 
 export function isCellElement(
-  obj: EventTarget
+  obj: EventTarget | Element
 ): obj is ResolvedHTMLTableDataCellElement {
   return '__cell__' in obj && !!(<HTMLTableDataCellElement>obj).__cell__
 }
@@ -38,22 +39,22 @@ export function renderHeader(table: Table) {
   return thead
 }
 
-export function renderValue(value: Value) {
+export function renderValue(value: PrimitiveValue) {
+  const span = document.createElement('span')
   switch (value.kind) {
     case ValueKind.string:
+      span.classList.add('string-literal')
     case ValueKind.number:
-      return value.value.toString()
+      span.textContent = value.value.toString()
+      break
     case ValueKind.nothing:
-      return ''
-    case ValueKind.formula:
-      throw new Error('formula is not supported yet')
+      break
   }
+  return span
 }
 
-export function renderCellContent(cell: Cell) {
-  const span = document.createElement('span')
-  span.textContent = renderValue(ensureCellValue(cell))
-  return span
+export function renderCellContent(cell: Cell, table: Table) {
+  return renderValue(ensureCellValue(cell, table))
 }
 
 export function renderEditingCellContent(cell: Cell) {
@@ -62,28 +63,28 @@ export function renderEditingCellContent(cell: Cell) {
   return input
 }
 
-export function renderCell(cell: Cell) {
+export function renderCell(cell: Cell, table: Table) {
   const td = document.createElement('td')
-  const span = renderCellContent(cell)
+  const span = renderCellContent(cell, table)
   td.appendChild(span)
   td.__cell__ = cell
+  cell.el = td
   return td
 }
 
-export function bindSaveListener(input: HTMLInputElement) {
+export function bindSaveListener(input: HTMLInputElement, table: Table) {
   input.addEventListener('blur', e => {
     const td = e.composedPath().find(isCellElement)
     if (td && isInput(td.firstElementChild)) {
       const cell = td.__cell__
       saveCell(cell, td.firstElementChild.value)
-
-      const span = renderCellContent(cell)
-      td.replaceChild(span, td.firstElementChild)
+      updateCell(cell, table)
+      notifyDirty(cell, table)
     }
   })
 }
 
-export function bindEditListener(tbody: Element) {
+export function bindEditListener(tbody: Element, table: Table) {
   tbody.addEventListener('click', e => {
     const td = e.composedPath().find(isCellElement)
     if (td && isSpan(td.firstElementChild)) {
@@ -91,7 +92,7 @@ export function bindEditListener(tbody: Element) {
       editCell(cell)
 
       const input = renderEditingCellContent(cell)
-      bindSaveListener(input)
+      bindSaveListener(input, table)
       td.replaceChild(input, td.firstElementChild)
       input.focus()
     }
@@ -108,12 +109,12 @@ export function renderBody(table: Table) {
     tr.appendChild(rowNum)
 
     table.rows[i].cells.forEach(cell => {
-      tr.appendChild(renderCell(cell))
+      tr.appendChild(renderCell(cell, table))
     })
     tbody.appendChild(tr)
   })
 
-  bindEditListener(tbody)
+  bindEditListener(tbody, table)
   return tbody
 }
 
