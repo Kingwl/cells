@@ -278,7 +278,6 @@ export function parse(str: string) {
   }
 
   function parseFormulaExpression(): FormulaExpression {
-    nextToken()
     return parseBinaryExpressionOrHigher()
   }
 
@@ -395,6 +394,7 @@ export function parse(str: string) {
   }
 
   function parseFormulaLiteral(): FormulaLiteralToken {
+    nextToken()
     const expression = parseFormulaExpression()
     return {
       kind: SyntaxKind.FormulaLiteral,
