@@ -17,3 +17,16 @@ export function colToIndex(col: string): number {
   }
   return sum
 }
+
+export interface Pos {
+  col: number
+  row: number
+}
+
+const cellRegex = /^([A-Za-z]+)([0-9]+)$/
+export function parseCell(str: string): Pos | undefined {
+  const m = str.match(cellRegex)
+  if (!m) return undefined
+  const [_, col, row] = m
+  return { col: colToIndex(col), row: Number(row) }
+}

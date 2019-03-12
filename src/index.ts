@@ -2,7 +2,7 @@ import { defaultRows, defaultCols, defaultTitle } from './models/constant'
 import { Table } from './models/table'
 import { fillRows } from './utils/helper'
 import { render } from './render'
-import { Cell } from './models/cell';
+import { Cell } from './models/cell'
 
 export interface Options {
   title?: string

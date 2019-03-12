@@ -163,3 +163,7 @@ export function isWhiteSpace(ch: number) {
     ch === CharacterCodes.space || ch === CharacterCodes.tab || isLineFeed(ch)
   )
 }
+
+export function isQuote(ch: number) {
+  return ch === CharacterCodes.singleQuote || ch === CharacterCodes.doubleQuote
+}

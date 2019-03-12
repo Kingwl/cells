@@ -5,7 +5,7 @@ import { isInput, isSpan } from './utils/dom'
 import { editCell, saveCell } from './edit'
 import { ensureCellValue } from './resolve'
 import { Value, ValueKind, PrimitiveValue } from './models/value'
-import { notifyDirty, updateCell } from './update';
+import { notifyDirty, updateCell } from './update'
 
 declare global {
   interface HTMLTableDataCellElement {

@@ -1,5 +1,5 @@
 import { Row } from './row'
-import { Cell } from './cell';
+import { Cell } from './cell'
 
 export enum Order {
   ASC,
