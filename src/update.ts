@@ -17,7 +17,11 @@ export function notifyDirty(cell: Cell, table: Table) {
   cell.dirty = true
   table.dirtyCell.add(cell)
   cell.dependencies.forEach(dep => notifyDirty(dep, table))
+}
 
+export function updateDirtyCell(table: Table, cb: () => void) {
+  table.dirtyCell = new Set<Cell>()
+  cb()
   table.dirtyCell.forEach(c => {
     updateCell(c, table)
   })

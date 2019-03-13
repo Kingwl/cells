@@ -11,9 +11,10 @@ export function range(start: number, end: number, cb: (i: number) => void) {
 }
 
 export function colToIndex(col: string): number {
+  col = col.toLowerCase()
   let sum = 0
   for (let i = 0; i < col.length; ++i) {
-    sum += col.charCodeAt(i) - CharacterCodes.A
+    sum += col.charCodeAt(i) - CharacterCodes.a
   }
   return sum
 }

@@ -4,6 +4,7 @@ export enum ValueKind {
   nothing,
   number,
   string,
+  boolean,
   formula
 }
 
@@ -25,13 +26,22 @@ export interface StringValue extends ValueBase {
   value: string
 }
 
+export interface BooleanValue extends ValueBase {
+  kind: ValueKind.boolean
+  value: boolean
+}
+
 export interface FormulaValue extends ValueBase {
   kind: ValueKind.formula
   value: FormulaExpression
   resolvedValue?: PrimitiveValue
 }
 
-export type PrimitiveValue = NothingValue | NumberValue | StringValue
+export type PrimitiveValue =
+  | NothingValue
+  | NumberValue
+  | StringValue
+  | BooleanValue
 
 export type Value = PrimitiveValue | FormulaValue
 

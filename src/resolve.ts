@@ -34,9 +34,11 @@ export function resolveFormulaValue(
   cell: Cell,
   table: Table
 ) {
-  const context: Context = { cell, table }
-
   if (!value.resolvedValue) {
+    cell.subs.forEach(sub => sub.dependencies.delete(cell))
+    cell.subs = new Set<Cell>()
+
+    const context: Context = { cell, table }
     value.resolvedValue = execute(value.value, context)
   }
   return value.resolvedValue
@@ -51,6 +53,7 @@ export function resolveCellValue(
     case ValueKind.nothing:
     case ValueKind.number:
     case ValueKind.string:
+    case ValueKind.boolean:
       return value
     case ValueKind.formula:
       return resolveFormulaValue(value, cell, table)

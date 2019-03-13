@@ -4,8 +4,8 @@ import { Cell } from './models/cell'
 import { isInput, isSpan } from './utils/dom'
 import { editCell, saveCell } from './edit'
 import { ensureCellValue } from './resolve'
-import { Value, ValueKind, PrimitiveValue } from './models/value'
-import { notifyDirty, updateCell } from './update'
+import { ValueKind, PrimitiveValue } from './models/value'
+import { notifyDirty, updateCell, updateDirtyCell } from './update'
 
 declare global {
   interface HTMLTableDataCellElement {
@@ -44,6 +44,7 @@ export function renderValue(value: PrimitiveValue) {
   switch (value.kind) {
     case ValueKind.string:
       span.classList.add('string-literal')
+    case ValueKind.boolean:
     case ValueKind.number:
       span.textContent = value.value.toString()
       break
@@ -79,7 +80,10 @@ export function bindSaveListener(input: HTMLInputElement, table: Table) {
       const cell = td.__cell__
       saveCell(cell, td.firstElementChild.value)
       updateCell(cell, table)
-      notifyDirty(cell, table)
+
+      updateDirtyCell(table, () => {
+        notifyDirty(cell, table)
+      })
     }
   })
 }

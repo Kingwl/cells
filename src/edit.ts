@@ -9,5 +9,6 @@ export function saveCell(cell: Cell, value: string) {
 
   if (value !== cell.value) {
     cell.value = value
+    cell.dirty = true
   }
 }

@@ -24,6 +24,7 @@ export enum SyntaxKind {
 
   FormulaOpenParenToken,
   FormulaCloseParenToken,
+  FormulaCommaToken,
 
   FormulaPlusToken,
   FormulaMinusToken,
@@ -34,6 +35,7 @@ export enum SyntaxKind {
 
   FormulaCellIdentifier,
   FormulaBuiltinIdentifier,
+  FormulaBuiltinCallExpression,
 
   FormulaNumericalLiteral,
   FormulaStringLiteral,
@@ -85,6 +87,7 @@ export type PrimaryExpression =
   | FormulaLiteralExpression
   | FormulaIdentifierExpression
   | FormulaParenExpression
+  | FormulaBuiltinCallExpression
 
 export type UnaryOrHigherExpression = FormulaUnaryExpression | PrimaryExpression
 export type BinaryOrHigherExpression =
@@ -142,9 +145,14 @@ export interface FormulaUnaryExpression extends Formula {
   expression: FormulaExpression
 }
 
+export interface FormulaBuiltinCallExpression extends Formula {
+  kind: SyntaxKind.FormulaBuiltinCallExpression
+  expression: FormulaBuiltinIdentifier
+  args: FormulaExpression[]
+}
+
 export function parse(str: string) {
   let cur = 0
-
   let token: SyntaxKind
   let tokenValue: string
   let tokenStart: number
@@ -166,8 +174,16 @@ export function parse(str: string) {
 
   function lookAHead<T extends Token>(cb: () => T | undefined) {
     const lastCur = cur
+    const lastToken = token
+    const lastTokenValue = tokenValue
+    const lastTokenStart = tokenStart
+    const lastTokenEnd = tokenEnd
     const result = cb()
     cur = lastCur
+    token = lastToken
+    tokenValue = lastTokenValue
+    tokenStart = lastTokenStart
+    tokenEnd = lastTokenEnd
     return result
   }
 
@@ -186,6 +202,7 @@ export function parse(str: string) {
         while (isWhiteSpace(ch)) {
           ch = str.charCodeAt(++tokenEnd)
         }
+        cur = tokenEnd
         return nextToken()
 
       case CharacterCodes._0:
@@ -226,6 +243,7 @@ export function parse(str: string) {
       case CharacterCodes.minus:
       case CharacterCodes.asterisk:
       case CharacterCodes.slash:
+      case CharacterCodes.comma:
         switch (ch) {
           case CharacterCodes.openParen:
             token = SyntaxKind.FormulaOpenParenToken
@@ -245,6 +263,11 @@ export function parse(str: string) {
           case CharacterCodes.slash:
             token = SyntaxKind.FormulaSlashTOken
             break
+          case CharacterCodes.comma:
+            token = SyntaxKind.FormulaCommaToken
+            break
+          default:
+            throw new Error('unknow token')
         }
 
         tokenValue = str.substring(tokenStart, ++tokenEnd)
@@ -329,7 +352,7 @@ export function parse(str: string) {
       case SyntaxKind.FormulaFalseLiteralToken:
         return parseFormulaBooleanLiteral(false)
       case SyntaxKind.FormulaBuiltinIdentifierToken:
-        return parseFormulaBuiltinIdentifier()
+        return parseFormulaBuiltinCallExpressionOrIdentifier()
       default:
         throw new Error('unexpected token')
     }
@@ -384,13 +407,40 @@ export function parse(str: string) {
     }
   }
 
-  function parseFormulaBuiltinIdentifier(): FormulaBuiltinIdentifier {
+  function parseFormulaBuiltinCallExpressionOrIdentifier():
+    | FormulaBuiltinCallExpression
+    | FormulaBuiltinIdentifier {
     const name = tokenValue
-    nextToken()
-    return {
+    const next = nextToken()
+    const expression: FormulaBuiltinIdentifier = {
       kind: SyntaxKind.FormulaBuiltinIdentifier,
       name
     }
+
+    if (next === SyntaxKind.FormulaOpenParenToken) {
+      nextToken()
+      const args: FormulaExpression[] = []
+      while (true) {
+        if (token === SyntaxKind.FormulaCloseParenToken) {
+          nextToken()
+          break
+        }
+
+        args.push(parseFormulaExpression())
+        if (token === SyntaxKind.FormulaCommaToken) {
+          nextToken()
+          continue
+        }
+      }
+
+      return {
+        kind: SyntaxKind.FormulaBuiltinCallExpression,
+        expression,
+        args
+      }
+    }
+
+    return expression
   }
 
   function parseFormulaLiteral(): FormulaLiteralToken {
